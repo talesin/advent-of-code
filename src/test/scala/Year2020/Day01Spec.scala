@@ -9,6 +9,7 @@ import org.scalatest.OptionValues._
 import scala.io.Source
 
 class Day01Spec extends AnyFlatSpec with Matchers with ScalaCheckPropertyChecks {
+  private val numbers = Gen.nonEmptyListOf(Gen.choose(9, 2020)).map(_.distinct)
   private val lessThan1010 = Gen.nonEmptyListOf(Gen.choose(9, 1019)).map(_.distinct)
   private val lessThan505 = Gen.nonEmptyListOf(Gen.choose(9, 505)).map(_.distinct)
 
@@ -49,11 +50,11 @@ class Day01Spec extends AnyFlatSpec with Matchers with ScalaCheckPropertyChecks 
   }
 
   "reportRepair3" should "find three that add to 2020 then multiply" in {
-    forAll(lessThan505, lessThan505) { (xs: List[Int], ys: List[Int]) =>
-      whenever(xs.nonEmpty && ys.nonEmpty && xs.head > 0 && ys.head > 0) {
+    forAll(lessThan505, lessThan505, numbers) { (xs: List[Int], ys: List[Int], zs: List[Int]) =>
+      whenever(xs.nonEmpty && ys.nonEmpty && zs.nonEmpty && xs.head > 0 && ys.head > 0) {
         val x = 2020 - xs.head - ys.head
         val expected: Option[Int] = Some(x * xs.head * ys.head)
-        val result = Day01.reportRepair3(x :: xs ++ ys)
+        val result = Day01.reportRepair3(zs ++ (x :: xs ++ ys))
         println(s"$result == $expected")
         result should matchPattern { case Some((expected, _, _, _)) => }
       }
