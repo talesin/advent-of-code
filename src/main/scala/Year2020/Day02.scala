@@ -19,19 +19,49 @@ Each line gives the password policy and then the password. The password policy i
 In the above example, 2 passwords are valid. The middle password, cdefg, is not; it contains no instances of b, but needs at least 1. The first and third passwords are valid: they contain one a or nine c, both within the limits of their respective policies.
 
 How many passwords are valid according to their policies?
+
+  --- Part Two ---
+While it appears you validated the passwords correctly, they don't seem to be what the Official Toboggan Corporate Authentication System is expecting.
+
+The shopkeeper suddenly realizes that he just accidentally explained the password policy rules from his old job at the sled rental place down the street! The Official Toboggan Corporate Policy actually works a little differently.
+
+Each policy actually describes two positions in the password, where 1 means the first character, 2 means the second character, and so on. (Be careful; Toboggan Corporate Policies have no concept of "index zero"!) Exactly one of these positions must contain the given letter. Other occurrences of the letter are irrelevant for the purposes of policy enforcement.
+
+Given the same example list from above:
+
+1-3 a: abcde is valid: position 1 contains a and position 3 does not.
+1-3 b: cdefg is invalid: neither position 1 nor position 3 contains b.
+2-9 c: ccccccccc is invalid: both position 2 and position 9 contain c.
+How many passwords are valid according to the new interpretation of the policies?
+
 */
 
 import scala.util.matching
 
 object Day02 {
-  case class Password(letter: Char, min: Int, max: Int, value: String) {
-    override def toString: String = s"$min-$max $letter: $value"
 
-    def isValid: Boolean = {
-      val n = value.count(_ == letter)
-      n >= min && n <= max
+  trait Validator {
+    def isValid(password: Password): Boolean
+  }
+  case object Part1 extends Validator {
+    def isValid(password: Password): Boolean = {
+      val n = password.value.count(_ == password.letter)
+      n >= password.min && n <= password.max
     }
   }
+  case object Part2 extends Validator {
+    def isValid(password: Password): Boolean = {
+      val ch1 = password.value.charAt(password.min-1)
+      val ch2 = password.value.charAt(password.max-1)
+
+      (ch1 == password.letter && ch2 != password.letter) || (ch1 != password.letter && ch2 == password.letter)
+    }
+  }
+
+  case class Password(letter: Char, min: Int, max: Int, value: String) {
+    override def toString: String = s"$min-$max $letter: $value"
+  }
+
   object Password {
     def apply(value: String): Password = {
       val re = "^(\\d+)-(\\d+) (\\w): (\\w+)".r("min", "max", "letter", "value")
@@ -39,5 +69,7 @@ object Day02 {
       Password(result.group("letter").head, result.group("min").toInt, result.group("max").toInt, result.group("value"))
     }
   }
-  def countValidPasswords(passwords: List[String]): Int = passwords.map(Password(_)).count(_.isValid)
+
+  def countValidPasswords(passwords: List[String], validator: Validator): Int = passwords.map(Password(_)).count(validator.isValid)
 }
+
